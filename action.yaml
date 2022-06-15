@@ -1,0 +1,33 @@
+name: Jekyll - Pandoc Deploy to S3 Bucket
+
+on:
+  push:
+    branches: [ main ]
+    
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        # aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # if you have/need it
+        aws-region: us-east-2
+
+    - name: Build the site in the jekyll/builder container
+      run: |
+        docker run \
+        --env GOOGLE_DRIVE_API_KEY=${{ secrets.GOOGLE_DRIVE_API_KEY }} \
+        -v ${{ github.workspace }}:/jekyll_data \
+        -v ${{ github.workspace }}/_site:/jekyll_data/_site \
+        --entrypoint /bin/bash \
+        emilfreme/jpb:latest -c "chmod -R 777 /jekyll_data && bundler install &&  bundle exec jekyll build --trace -V"
+    - name: "Deploy to AWS"
+      run: aws s3 sync ${{ github.workspace }}//_site/ s3://${{ secrets.AWS_S3_BUCKET_NAME }} --acl public-read
