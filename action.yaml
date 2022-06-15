@@ -1,4 +1,8 @@
 name: Jekyll - Pandoc Deploy to S3 Bucket
+description: Github Actions, to build and deploy a Jekyll Website with Pandoc installed.
+branding:
+  icon: "check-circle"
+  color: "purple"
 
 on:
   push:
